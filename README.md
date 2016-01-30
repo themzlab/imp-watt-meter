@@ -14,3 +14,4 @@ A PHP script recieves this message and logs to a file.
 Using the electric imp agent, it is possible to redirect the data to one of many
 data repository services.
 
+http://themzlab.tumblr.com/wattmeter
