@@ -1,0 +1,1210 @@
+
+<!DOCTYPE html>
+<!-- 
+Documented on my blog - The Mz Lab themzlab.tumblr.com
+works with electric imp agent; 
+electric imp device works with ADE7953 energy measuring IC
+-->
+<html>
+<head>
+	<link rel="shortcut icon" href="http://www.yourdomain.com/faviconPower2.ico"/>
+	
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <link rel="apple-touch-startup-image" media="(device-width: 320px)" href="cc_startup.png" />
+    <link rel="apple-touch-icon" href="cc_screen_icon.png"/>
+	
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
+	<link rel = "stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery-mobile/1.4.2/jquery.mobile.min.css" />
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-mobile/1.4.2/jquery.mobile.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/highcharts/3.0.10/highcharts.js"></script>
+	
+	<script = src = "//cdnjs.cloudflare.com/ajax/libs/jquery-mobile/1.4.2/jquery.mobile.min.map"></script>
+	
+	
+<script>
+
+$( function() {   
+	
+	//Personal stuff first
+	const mydomainname = 'http://www.yourdomain.com';
+	const DialogTitle = 'Credits';
+	const DialogContent = 'The Mz Lab';
+	
+	//Below here, do not put personal information
+	
+	const urlpattern = 'https://agent.electricimp.com/#/api';
+	jQuery.support.cors = true;
+	
+	
+	const es = ""; //empty string
+	var nameofbutton = es;
+	
+	var selectedtab;
+	
+	var _meterdata;
+
+	const SERIESCURRENT = 0;
+	const SERIESVOLTAGE = 1;
+	const SERIESCURRENTTREND = 2;
+	
+    var  kwhlabels = ['kWh all time','kWh today','kWh week','kWh since boot'];
+	var whichlabel = 0;
+	
+	var httpimp = es;
+    var externalURL =es;
+
+	var blocking = false;
+	
+	var readingtime = {measureone : 5, measuretwo : 10, measurethree : 60}
+		
+	var buttonmessage = { button: 'name of button', time: 0 , type: 'reading'}
+	
+	var blink = 0;
+	var blinkbutton = null;
+	
+	$(document).delegate('#mydialog', 'pagehide', function() {
+			console.log('information dialog closed');
+			$('#dialogtitle').text('Credit');
+			$('#dialogcontent').text('electric imp Watt Meter');
+	}
+	);
+	
+	$(document).delegate('#pageoptions', 'pagehide', function() {
+  		
+		//Called upon closing the dialog box for changing the meter
+		
+		//For some reason the highlighted tab is NOT selected upon return
+		//so do that manually here
+		$('#' + selectedtab).addClass('ui-btn-active');
+		
+  		metername = $('#selectmeter').find(':selected').val();
+
+    	//the current url from the web page
+  
+		var mynewurl = window.location.href.split('=');
+
+		//place the new meter name into the url where the old one had been
+
+		if (mynewurl[1]){
+			var newurl = mynewurl[0] + '=' + metername;
+		}
+		else
+		{
+			var newurl = mynewurl[0] + '?meter=' + metername;	
+		}
+
+		//I don't know what to do with the state object so I just use an empty object
+		history.pushState({}, metername , newurl);
+
+		//get the unique url (agent unique identifier from electricimp)
+
+		externalURL=localStorage[metername];	
+		
+		httpimp = urlpattern.replace('#' , externalURL);
+		
+		changemeter();
+		
+		buildhighchart();//highchart has to be drawn after the URL is set correctly in the history
+		
+	});
+
+	function updatekwh(){
+
+		console.log('in updatekwh now');
+		console.log(_meterdata);
+
+    $('#kwhlabel').text(kwhlabels[whichlabel]);
+			switch (whichlabel){
+    			case 0:
+    			    $('#KWHRButton').text(parseFloat(Math.round(_meterdata['KWH'] * 100) / 100).toFixed(2));
+    			break;
+    			case 1:
+    			    $('#KWHRButton').text(parseFloat(Math.round(_meterdata['KWHtoday'] * 1000) / 1000).toFixed(3));
+    			break;
+    			case 2:
+    			    $('#KWHRButton').text(parseFloat(Math.round(_meterdata['KWHweek'] * 100) / 100).toFixed(2));
+    			break;
+    			case 3:
+    			    $('#KWHRButton').text(parseFloat(Math.round(_meterdata['KWHboot'] * 100) / 100).toFixed(2));
+    			break;
+			}
+}
+
+
+	function testorient(){
+		
+		var _width = screen.width;
+		var _height = screen.height;
+		
+		adderrorlog($(window).height() + '  ' + screen.height);//335 640 portrait		651 360 landscape
+		adderrorlog($(window).width() + '  ' + screen.width);// 640 360 portrait		360  640 landscape
+
+		var realWidth=_width;
+		var chartHeight = _height;
+		
+		if (_width>480){
+			//no need to resize very wide, only to small
+			_width=480;
+		}
+		else
+		{
+			_width=_width-20;
+		}
+		if (chartHeight<200){
+			//no need to resize very wide, only to small
+			
+				chartheight=200;
+			
+		}
+		else if (chartHeight >360)
+		{
+			
+			chartHeight = 360;
+		}
+		
+		
+		$('#ContentReflow').width(_width);
+		console.log('about to change RealTimeChart width');
+		$('#RealTimeChart').width(_width);
+		
+		console.log('about to change RealTimeChart height');
+		$('#RealTimeChart').height(chartHeight);
+		$('#fooo').width(_width);
+
+		$('#data').width(_width);
+
+		//
+		$('#tabs').width(_width);
+		//
+		$('#fragment-2').width(_width);
+		$('#charts').width(_width-30);
+		
+		
+		if (realWidth<500){
+				//Portrait
+				console.log('try to set portrait');
+                $('#metersA .ui-block-d').css('display','none');            
+                $('#metersA').removeClass('ui-grid-c').addClass('ui-grid-b');
+				
+				$('#metersB .ui-block-d').css('display','none');            
+                $('#metersB').removeClass('ui-grid-c').addClass('ui-grid-b');
+				//ContentReflow
+				
+				
+            } else {
+				//landscape
+				console.log('try to set landscape');
+                
+                $('#metersA').removeClass('ui-grid-b').addClass('ui-grid-c');
+                $('#metersA .ui-block-d').css('display','block');           
+				
+				
+                $('#metersB').removeClass('ui-grid-b').addClass('ui-grid-c');
+                $('#metersB .ui-block-d').css('display','block');            
+				
+            }
+			
+	}
+
+
+	$(window).on('orientationchange', function(e) {
+     	testorient();
+	});
+	
+	
+	
+	$('#meterurl').keyup(function () {
+
+        localStorage[metername] = $(this).val();
+		console.log('; ' + metername);});
+
+	function GetQueryStringParams(sParam){
+
+	    var sPageURL = window.location.search.substring(1);
+	    var sURLVariables = sPageURL.split('&');
+
+	    for (var i = 0; i < sURLVariables.length; i++)
+	    {
+	        var sParameterName = sURLVariables[i].split('=');
+	        if (sParameterName[0] == sParam)
+	        {
+	            return sParameterName[1];
+	        }
+	    }
+	    return es;
+	 }
+
+	
+	$('#selectmeter').bind('change',function(event){
+
+		//get the value of the currently selected menu item
+
+		metername = $('#selectmeter').find(':selected').val();
+		
+		
+		externalURL=localStorage[metername];	
+		
+		
+		$('#meterurl').val(externalURL);
+		}
+	);
+
+
+	//simple flag to indicate whether the long-polling 'get' is
+	//active at the moment.
+
+	var longpoll_isactive = 0;
+	
+	//pagechart
+	
+	
+	$('.btntabs').bind( 'click', function(event) {
+		//
+		console.log('tabs click');
+		
+		selectedtab = this.id;
+		
+		switch(this.id)
+		{
+		case 'pagehome':
+			$( '#Measurement' ).hide();
+			$( '#logs' ).show();
+			$( '#chart' ).show();
+			$( '#license' ).show();
+			
+		break;
+		case 'pagegraph':
+			$( '#Measurement' ).hide();
+			$( '#logs' ).hide();
+			$( '#chart' ).show();
+		$( '#license' ).hide();
+		
+		break;
+		case 'pagelogs':
+		$( '#Measurement' ).hide();
+		$( '#logs' ).show();
+		$( '#chart' ).hide();
+		$( '#license' ).hide();
+		
+		break;
+		case 'pagemeasure':
+			$( '#Measurement' ).show();
+			$( '#logs' ).hide();
+			$( '#chart' ).hide();
+			$( '#license' ).hide();
+		break;
+		
+		default:
+		}
+		
+		
+		
+	});
+
+	$('.popup').bind( 'taphold', function(event) {
+	
+		
+		event.preventDefault();
+		var _title = '';
+		var _content = '';
+		
+		switch(this.id)
+		{
+			case 'KWHRButton':
+				_title = 'kWh';
+				_content=('kilowatt-hours of energy since reset as shown in the title above the displayed value');
+				_content += '<br>' + 'week: kWh starting at 1:00 AM Monday morning';
+				break;
+			case 'PFButton':
+				
+				_title = 'Power Factor';
+			  _content=('Active Power / VA \n\rInductive is lagging current \n\rCapacitive is leading current');
+			  
+			  break;
+			case 'VAButton':
+					_title = 'Apparant Power';
+					_content=('Sum of RMS volts * RMS amps, Apparant energy divided by elapsed time');
+				break;
+			case 'WattsButton':
+				_title = 'Power in Watts';
+			  _content=('The Watts measurement is made by accumulating energy and dividing by elapsed time');
+			  break;
+			
+			case 'VoltButton':
+				_title = 'Volts RMS';
+				_content=('The RMS Voltage measurement has a settling time of approx. 200 ms and is updated at a rate of 6.99 kHz in the IC');
+			break;
+
+			case 'CurrentButton':
+				_title = 'Current RMS';
+					_content=('The RMS Current measurement has a settling time of approx. 200 ms and is updated at a rate of 6.99 kHz in the IC');
+			break;
+
+			case 'CurrentPeakButton':
+				_title = 'Peak Current Level';
+				_content=('Current Peak is an instantaneous measurement taken from the absolute value of the current measurement (sampled at 6.99kHz), analog bandwidth 1.3kHz');
+			break;
+
+			case 'VoltPeakButton':
+				_title = 'Peak Current Level';
+				_content=('Volt Peak is an instantaneous measurement taken from the absolute value of the Voltage measurement (sampled at 6.99kHz), analog bandwidth 1.3kHz');
+			break;
+
+			default:
+			  _content= ('button is not identified');
+		}
+		$('#dialogtitle').text(_title);
+		$('#dialogcontent').text(_content);
+		$.mobile.changePage( '#mydialog');
+
+	}
+	);
+
+
+	$('.popup').bind( 'click', function(event) {
+	
+		//this class is only used for buttons that are used unconventionally
+		//to display data, pressing the button gives you a help message
+		//describing it
+
+		event.preventDefault();
+
+		switch(this.id)
+		{
+		case 'KWHRButton':
+			
+			whichlabel = whichlabel + 1;
+			if (whichlabel>3){whichlabel=0;}
+			updatekwh();
+
+			break;
+		case 'PFButton':
+			
+			
+		  //alert('Power Factor = sign(Reactive Power) * Active Power / VA \n\rInductive is lagging current \n\rCapacitive is leading current');
+		  
+		  break;
+
+		case 'WattsButton':
+
+		  //alert('The Watts measurement is made by accumulating energy and dividing by elapsed time');
+		  break;
+		
+		case 'VoltButton':
+			//alert('The RMS Voltage measurement has a settling time of approx. 200 ms and is updated at a rate of 6.99 kHz in the IC');
+		break;
+
+		case 'CurrentButton':
+				//alert('The RMS Current measurement has a settling time of approx. 200 ms and is updated at a rate of 6.99 kHz in the IC');
+		break;
+
+		case 'CurrentPeakButton':
+			//alert('Current Peak is an instantaneous measurement taken from the absolute value of the current measurement (sampled at 6.99kHz), analog bandwidth 1.3kHz');
+		break;
+
+		case 'VoltPeakButton':
+			//alert('Volt Peak is an instantaneous measurement taken from the absolute value of the Voltage measurement (sampled at 6.99kHz), analog bandwidth 1.3kHz');
+		break;
+
+		default:
+		  //alert ('button is not identified');
+		}
+	});
+
+	$('.btnCommand').bind( 'click', function(event) {
+	
+		//this class is only used for buttons that are commanding collection
+		//of time-series data (waveform or snapshot over XX seconds)
+		
+		
+		event.preventDefault();
+
+		if (blocking==false){
+			
+			console.log('clicked');
+
+			blocking=true;
+			
+				console.log(this.id + ' button was clicked');
+			
+			buttonmessage.button = this.id;
+			buttonmessage.type = 'command';
+			
+			SendJSONtoAgent(buttonmessage,this.id);
+			
+			setTimeout(function(){blocking=false; $('.btnCommand').removeClass('ui-state-disabled');$('.btnMeasure').removeClass('ui-state-disabled')},(22000));//release for second try after 22 seconds
+
+		}
+		
+	});
+	
+	
+	function flip(_button){
+		
+
+		if (blink==1){
+			blink=0;
+			
+			$(nameofbutton ).addClass('ui-btn-active');
+			
+		}
+		else
+		{
+			blink=1;
+			$(nameofbutton ).removeClass('ui-btn-active');
+			
+		}
+
+	}
+	
+	$('.btnMeasure').bind( 'click', function(event) {
+	
+	
+		//this class is only used for buttons that are requesting a reading of
+		//a value over a specified time period
+		
+		//Button will cause JSON message to be sent.
+		//Upon 
+		
+		nameofbutton= '#' + this.id;
+		
+
+		console.log('no user and zero');
+		
+
+		event.preventDefault();
+		if (blocking==false){
+			
+			buttonmessage.button = this.id;
+			buttonmessage.type = 'measurement';
+			buttonmessage.time=readingtime[this.id];//set the corret time interval for this reading
+			
+			blocking=true;
+			$(this).addClass('ui-btn-active');
+			
+			SendJSONtoAgent(buttonmessage,this.id);
+			
+		}
+	});
+	
+	$('#headeroptions').on( 'click', function(event) {
+		
+		console.log('showed page');
+		
+		$.mobile.changePage( '#pageoptions', { role: 'dialog' } );
+
+	});
+
+	
+	$('#reset').on( 'click', function(event) {
+		event.preventDefault();
+
+			testorient();
+
+		with(buttonmessage){
+			button = 'reset';
+			time = 0;
+			type = 'command';
+		}
+
+		SendJSONtoAgent(buttonmessage,this.id);
+				
+		$('.btnMeasure').removeClass('ui-btn-active');
+
+	});
+	
+	
+  function SendJSONtoAgent(_table,buttonid){
+	  
+	 /*For this function do not toggle 'longpoll_isactive' variable
+	  That is for the long-polling 'get' and this one just
+	  responds right away with a string and is not entered into that queue
+	  In fact, the long-polling get responds to this change
+	  but it will respond to all browsers that have such a 
+	  request open and in that way all browsers will have
+	  states updating at the same time
+		using 'get'; use query object on the imp agent side
+		tells the agent this is a button state change
+		data type coming back, which is actually nothing
+	  */
+	  
+	  console.log('ajax: ' + _table);
+		$.ajax({
+		type: 'get'	
+		,url: httpimp + '/btn'
+		,dataType: 'html'
+		,data: _table
+		})
+		
+		.done(function(data) { 
+				if (data == es){
+					console.log('nothing is returned why?????');
+				}
+				else{
+					
+					blinkbutton = setInterval(function(){flip();},500);
+					console.log('done sending message to agent!');
+				}
+				
+				if (buttonid!='reset'){
+					$('.btnMeasure' ).addClass('ui-state-disabled');
+					$('.btnCommand' ).addClass('ui-state-disabled');
+				}
+				
+			})
+		.fail(function() { console.log('error'); })
+		.always(function() { 
+				console.log('complete command!'); 
+				blocking=false; 
+			}
+		);
+				
+	}
+	
+		
+	function  clearseries(_which){
+		var chart = $('#RealTimeChart').highcharts();
+		chart.series[_which].setData([[0,0]]);
+	}
+	
+
+	function setSeries(seriesdata,seriesnum){
+		var chart = $('#RealTimeChart').highcharts();
+		chart.series[seriesnum].setData(seriesdata);
+	}
+	
+	
+	function updateMeterData (){
+		
+		var currentval = document.getElementById('txtPowerLog').value;
+		
+		date = new Date();
+		
+		console.log("update eter data");
+		
+		$('#txtPowerLog').text(currentval + _meterdata.GMT + ' , ' + _meterdata.W + '\n');
+		
+		$('#CurrentButton').text(parseFloat(Math.round(_meterdata.I * 1000) / 1000).toFixed(3) + ' A');
+		$('#VoltButton').text(parseFloat(Math.round(_meterdata.V * 100) / 100).toFixed(2) + ' V');//
+		$('#VoltPeakButton').text(parseFloat(Math.round(_meterdata.Vpeak * 100) / 100).toFixed(2) + ' V');//
+		$('#WattsButton').text(parseFloat(Math.round(_meterdata.W * 10) / 10).toFixed(1) + ' W');
+		
+
+		$('#VAButton').text(parseFloat(Math.round(_meterdata.VA * 100) / 100).toFixed(1) + ' VA');//
+		
+		
+		$('#CurrentPeakButton').text(parseFloat(Math.round(_meterdata.Ipeak * 1000) / 1000).toFixed(3) + ' A');
+		if (_meterdata.PF >0){
+			$('#PFButton').text(parseFloat(Math.round(_meterdata.PF * 100)/100).toFixed(2)+' I');
+			
+		}
+		else
+		{
+			$('#PFButton').text(parseFloat(Math.round(_meterdata.PF * -100)/100).toFixed(2) + ' C');	
+			
+		}
+
+		console.log(_meterdata);
+		console.log('about to call updatekwh');
+
+		updatekwh();
+
+	}
+
+
+	function makeSureLongPollisGoing(){
+		
+		if (longpoll_isactive==0){
+			console.log(' *************************** it wasn not so long poll is started');
+			mainLongPoll();
+		}
+	}
+	
+	//used to re-start
+	setInterval(makeSureLongPollisGoing,60000);
+	
+	function setXlimit(limit){
+
+		var chart = $('#RealTimeChart').highcharts();
+		chart.xAxis[0].setExtremes(0, limit)
+	}
+
+
+	function handleMeasurement(_measurement, Power){
+
+		console.log(_measurement.name);
+		alert(_measurement + "  " + Power);
+		
+		addprocesslog(_measurement + "  " + Power);
+		
+		//turn appropriate button BLUE indicating the reading has been taken
+		
+		clearInterval(blinkbutton);
+
+		$('#' + _measurement.name).addClass('ui-btn-active');
+		
+		
+		
+	}
+
+	function Signed_from_2bytes(high,low){
+		/*high is index 1, low is index 0
+		 *...
+		 *high is index 19, low is index 18 */
+		var result = 0;
+		
+		if (high > 127){
+			result = 0xFFFF0000 | ((high <<8) | low);
+		}
+		else{
+			result = (high <<8) | low;
+		}
+		
+		return result;
+				
+	}
+	
+	function updateall(agentMsg){
+		//Look in the JSON to see what information has been sent to the browser
+				
+				/*
+				var high = 0xFF;
+				var low = 0xC3;
+				
+				console.log(Signed_from_2bytes(high,low));//-61
+				
+				console.log(Signed_from_2bytes(0x00,0x01));//1
+				
+				console.log(Signed_from_2bytes(0x00,0x00));//0
+				
+				console.log(Signed_from_2bytes(0x7F,0xFF));//32767
+				
+				console.log(Signed_from_2bytes(0xFF,0xFF));//-1
+				
+				console.log(Signed_from_2bytes(0x80,0x00));//-32768
+				
+				*/
+				
+				if ( 'meterdata' in agentMsg){
+					_meterdata = agentMsg.meterdata;
+					updateMeterData ();	
+					_meterdata = agentMsg.meterdata;
+					console.log(" putting _metere data together");
+
+				}
+
+				if ('Iavg' in agentMsg){
+
+				$('#processLog').text(document.getElementById('processLog').value  + agentMsg.meterdata.GMT + ' , ' + agentMsg.Iavg + ' , ' + agentMsg.Vavg+ '\n');
+					
+				}
+				
+				if ('measurement' in agentMsg){
+							
+					console.log('measurement recieved');
+					handleMeasurement(agentMsg.measurement.name, agentMsg.meterdata.W);
+
+					$('.btnCommand').removeClass('ui-state-disabled');//release this back to the person
+					$('.btnMeasure').removeClass('ui-state-disabled');//release this back to the person
+					
+
+				}
+				
+				if ('waveIA' in agentMsg){
+					//assume waveV
+
+					setSeries(agentMsg.waveV,SERIESVOLTAGE);
+					setXlimit(agentMsg.maxX);	
+					//maxYI
+					if (agentMsg.maxX <200){
+						setSeries(agentMsg.waveIA,SERIESCURRENT);
+						$('#RealTimeChart').highcharts().setTitle({text: 'Waveform'});
+						$('#RealTimeChart').highcharts().yAxis[1].setTitle({text: 'Current (A)'});
+						//$('#RealTimeChart').highcharts().yAxis[1].setExtremes (-1.0, 1.0, true, true);
+						$('#RealTimeChart').highcharts().yAxis[1].setExtremes (-agentMsg.maxYI, agentMsg.maxYI, true, true);
+						
+					}
+					else
+					{
+						setSeries(agentMsg.waveIA,SERIESCURRENTTREND);
+						$('#RealTimeChart').highcharts().setTitle({text: '9 second trend of power'});
+						$('#RealTimeChart').highcharts().yAxis[1].setTitle({text: 'Power (Watts)'});
+						$('#RealTimeChart').highcharts().yAxis[1].setExtremes (0, 2000.0, true, true);//(0, agentMsg.maxYI, true, true);
+					}
+					
+					
+					$('.btnCommand').removeClass('ui-state-disabled');//release this back to the person
+					$('.btnMeasure').removeClass('ui-state-disabled');//release this back to the person
+					
+				}
+				
+				if ( 'processLog' in agentMsg){
+				
+					console.log('process log is found');
+					
+					$('#processLog').text(document.getElementById('processLog').value  + agentMsg.Temps.time + ' , ' + agentMsg.processLog.note + '\n');
+				}
+					
+				if ( 'errorLog' in agentMsg){
+				
+					var currenterrorLog = document.getElementById('errorLog').value;
+					console.log('error log is found');
+					
+				}
+	}
+	
+	function addprocesslog(_message){
+		var currentprocessLog = document.getElementById('processLog').value;
+		
+		
+		$('#processLog').text(_message + '\n' + currentprocessLog);
+
+	}
+	
+	function adderrorlog(_message){
+		var currenterrorLog = document.getElementById('errorLog').value;
+		
+		
+		$('#errorLog').text(_message + '\n' + currenterrorLog);
+
+	}
+
+	function mainLongPoll(){
+	
+		longpoll_isactive=1;
+		$.ajax({
+			type: 'get'
+			,url: httpimp
+			,crossDomain: true
+			,dataType: 'json'
+			})
+
+			.done (function(agentMsg, textstatus, xhr) {
+				
+				console.log(agentMsg);
+				updateall(agentMsg);
+				
+				longpoll_isactive=0;
+				mainLongPoll();	//immediately call again		
+			})
+			
+			.fail (function(err) {
+				console.log('long poll err'+ err.status)
+				longpoll_isactive=0;
+				if (err.status == 408){
+					console.log('restart the poll');
+					mainLongPoll();
+				}
+			})
+	}
+  
+	
+	function changemeter(){
+		longpoll_isactive=1;
+		$.ajax({
+		type: 'get'
+		,url: (httpimp + '/new')
+		,dataType: 'json'
+		  ,'Access-Control-Allow-Origin': mydomainname
+		}) 
+    
+		.done(function(myArr) { 
+			
+			updateall(myArr);
+			
+			if ( 'impeeid' in myArr){
+					//impeee has respondedd so let us start communicationg
+					//using the long poll technique
+					console.log(myArr.impeeid);
+					setTimeout(function(){mainLongPoll()},500);
+					
+			}
+			
+			if (('mode' in myArr) && (myArr.mode ==99)){
+			
+				console.log('imp not connected');  
+				adderrorlog('The imp Device is not connected\nis it plugged in?');
+				alert('The imp Device is not connected\nis it plugged in?\n');
+				$('#textarea-error').refresh;
+			}
+			
+			console.log('hide Measurement');
+			$( '#Measurement' ).hide();
+
+			
+			
+		})//end done function
+	
+		.fail(function(jqXHR, textStatus, errorThrown) { 
+			
+			console.log(es);
+			console.log('fail: - Do you have the correct URL code for the agent?');
+			console.log(textStatus + ' ' + errorThrown);
+
+		})
+
+		.always(function() { console.log('complete'); longpoll_isactive=0;testorient();
+		
+		
+			switch(metername){
+
+				case 'Watt1':
+					$('#headertext').text('Heater');
+					break;
+				case 'Watt2':
+					$('#headertext').text('Refrigerator-side by side');
+					break;
+				default:
+					$('#headertext').text(metername);
+			}
+
+		
+		});
+		
+	}
+
+	
+	function setupwhichmeter(){
+		
+		//We need a URL to talk to and wish to store
+		//this in local storage.  this allows you
+		//to keep the URL of the imp private (not printed in this page)
+		
+		metername = GetQueryStringParams('meter');
+
+		console.log('meter name is ' + metername);
+		console.log('code ' + GetQueryStringParams('code'));
+
+		if (metername == es){
+			metername = 'Watt2A';
+		}
+		//keep the unique id for the agent private and local
+	
+		externalURL=localStorage[metername];	
+		console.log("external is!! " + externalURL);
+		
+		if (externalURL == null | externalURL == ""){
+			console.log("external url is presently " + externalURL);
+			externalURL=GetQueryStringParams('code');
+			
+			if (externalURL != ""){
+					localStorage[metername] = externalURL;
+			
+			}
+			
+		}
+		
+		if (externalURL != ""){
+					
+			var url_without_code = window.location.href.split('&');
+			console.log(":" + url_without_code[0] + ":");
+			history.pushState({}, metername , url_without_code[0]);
+		}
+		 
+		httpimp = urlpattern.replace('#' , externalURL);
+		console.log(httpimp);
+
+		// Select the relevant option, de-select any others
+
+		$( '#selectmeter' ).val(metername).attr('selected', true); 
+		
+		$('#meterurl').val(externalURL);
+		
+	}
+
+
+	function buildhighchart(){
+	$('#RealTimeChart').highcharts({
+			//5, 141, 199
+		colors: [ 'rgba(145,0,0,1)', 'rgba(5,141,199,0.3)','#ED561B', '#DDDF00', '#24CBE5', '#FF9655', '#FFF263', '#6AF9C4' ,'#058DC7','#64e572'],
+        chart: {
+            type: 'spline',
+			 marginTop: 30,
+			 backgroundColor: {
+			linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+			stops: [
+				[0, 'rgb(255, 255, 255)'],
+				[1, 'rgb(240, 240, 255)']
+			],
+			plotBackgroundColor: 'rgba(255, 255, 255, .9)',
+			plotShadow: true,
+			plotBorderWidth: 1
+      },
+      plotBackgroundColor: 'rgba(255, 255, 255, .9)',
+      plotShadow: true,
+      plotBorderWidth: 1
+        },
+        title: {
+                text: 'Waveform'
+          },
+		xAxis: {
+			gridLineWidth: 1,
+			lineColor: '#000',
+			tickColor: '#000',
+			max: '50',
+			min: '0',
+			title: {text: 'time (ms)', 
+				style: {
+					fontSize: '11px' ,
+					fontFamily: 'Verdana, sans-serif', 
+					color: '#191919'
+				}
+			}
+		},
+		yAxis: [{
+			minorTickInterval: 'auto',
+			tickinterval: 100,
+			lineColor: '#000',
+			lineWidth: 1,
+			tickWidth: 1,
+			tickColor: '#000',
+			min: -400,
+			max: 400,
+			labels: {
+				style: {
+					color: '#000',
+					font: '14px ,Verdana, sans-serif' //was 11
+				}
+			},
+			title: {
+				style: {
+					color: '#333',
+					fontWeight: 'bold',
+					fontSize: '12px',
+					fontFamily: 'Verdana, sans-serif'
+				},
+				text : 'Volts',
+			}
+		},
+{
+      minorTickInterval: 100,
+      lineColor: '#000',
+      lineWidth: 1,
+      tickWidth: 1,
+      tickColor: '#000',
+      min: -50,
+      max: 50,
+      labels: {
+         style: {
+            color: '#000',
+            font: '14px , Verdana, sans-serif' //was 11
+         }
+      },
+      opposite: true,
+      title: {
+         style: {
+
+            color: '#333',
+            fontWeight: 'bold',
+            fontSize: '12px',
+            fontFamily: ' Verdana, sans-serif'
+         },
+         text: '-',
+      }
+   }
+   ],
+		
+		plotOptions: {
+            series: {
+                marker: {
+                    enabled: false
+                }
+            }
+        },
+        series: [
+			//{marker: {enabled:true},type: 'line',lineWidth: 4,name: 'Power(W)'},
+			{type: 'line',  name: 'A',    data:[[0,0]],lineWidth: 2,yAxis: 1},
+			{type: 'spline',name: 'V',    data:[[0,0]], lineWidth: 4},
+			{type: 'line',  name: 'Power (Watts)',data:[[0,0]],lineWidth: 2,yAxis: 1}
+		],
+    });
+	
+	}
+	
+	$( window ).load(function() {
+        console.log( "window loaded" );
+    });
+	
+	$(document).ready(function() {
+		
+		//alert("hi");
+		//console.log('document ready');
+		
+		$('#pagehome' ).addClass('ui-btn-active');
+		
+		setupwhichmeter();
+		
+		setupwhichmeter();
+		
+		
+		changemeter();
+		
+		if (localStorage['WattMeter2AURL']) {
+				   $('#WattMeter2AURL').val(localStorage['WattMeter2AURL']);
+		}
+		
+		testorient();
+		
+		buildhighchart();
+		
+	}); //end doc ready definition
+
+	
+	
+	
+}); //end of $javascript
+  
+</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+
+<!--<title>Watt Meter Model 2</title>-->
+</head>
+
+<body >
+   <div data-role="page" id="pagewattmeter"  >
+        <div data-theme="a" data-role="header">
+		
+            <h3 style="text-align:center"><span style="font-size:1.46em;  color:#909090;" id ="headertext">Watt Meter</span>
+			</h3>
+			<div data-mini="true" data-role="navbar" style="padding: 0px;width: 480px;margin: 0 auto">
+				<ul>
+					<li><a data-mini="true" id ="pagehome" class="btntabs" >Home</a></li>
+					<li><a data-mini="true" id ="pagegraph" class="btntabs" >Graph</a></li>
+					<li><a data-mini="true" id ="pagelogs" class="btntabs" >Logs</a></li>
+					<li><a data-mini="true" id ="pagemeasure" class="btntabs" >Measure</a></li>
+				</ul>
+			</div><!-- /navbar -->
+
+            <a id="headeroptions"  data-icon="gear" class="ui-btn-right"></a>
+			
+        </div>
+	<div role="main" class="ui-content" id = "mainpage" style="text-align: center;">
+		<div data-role="content" id="data" style="padding: 0px;width: 480px;margin: 0 auto" > 	
+		<div style="text-align: center;">
+			<div data-role="content">
+		   	<div class="ui-grid-c" id="metersA">
+				 <div class="ui-block-a">
+					<span>Power</span><br>
+					<a href="#" data-role="button"  class = "popup" data-mini="true" data-corners="false" id="WattsButton" >0.00 W</a>
+				 </div> 
+				<div class="ui-block-b">
+				 	<span>VA</span><br>
+				   	<a href="#" data-role="button" class = "popup" data-mini="true"  data-corners="false" id = "VAButton" >0.00 VA</a>
+				 </div>				 
+				 <div class="ui-block-c">
+				 	<span>Current</span><br>
+				   	<a href="#" data-role="button" class = "popup" data-mini="true"  data-corners="false" id = "CurrentButton" >0.0 A</a>
+				 </div>
+				 <div class="ui-block-d">
+					<span style="font-size:11px">Peak DCA</span><br>
+			       	<a href="#" data-role="button" class = "popup" data-mini="true"  data-corners="false" id = "CurrentPeakButton" >0.0 A</a>
+				 </div>
+		   	</div>
+		   	<div class="ui-grid-c" id="metersB">
+			     <div class="ui-block-a">
+				  	<span style="font-size:11px" id = "kwhlabel">kWh all time</span><br>
+				 	<a href="#"  data-role="button" icon= "star" class="ui-mini ui-btn ui-shadow ui-corner-all ui-btn-icon-right ui-icon-carat-r popup"  data-corners="false" id="KWHRButton" >0.0 kwhr.</a>
+			     </div>
+				 <div class="ui-block-b">
+				 	<span style="font-size:11px">PF</span><br>
+			       	<a href="#" data-role="button" class = "popup" data-mini="true"  data-corners="false" id = "PFButton" >0 PF</a>
+			    </div>
+			    <div class="ui-block-c">
+					<span>Volts</span><br>
+				   	<a href="#" data-role="button" class = "popup" data-mini="true" data-corners="false" id="VoltButton">000.0 V</a> 
+			    </div>
+				<div class="ui-block-d">
+				 	<span style="font-size:11px">Peak DCV</span><br>
+			       	<a href="#" data-role="button" class = "popup" data-mini="true" data-corners="false" id="VoltPeakButton">00.0 A</a>  
+			    </div>
+		   </div>   
+		  </div>
+
+
+		</div><!-- centered content -->
+	</div><!-- DIV that creates the parent to center in -->
+		<div id="chart">
+		<div class="ui-grid-a" id="charts" style="padding: 1px;width: 420px;margin: 0 auto" >
+			<div class="ui-block-a">
+				<a data-role="button" data-mini="true" class = "btnCommand" id = "waveform"  data = "wave" button = "wave" >Waveform</a>
+			</div>
+			<div class="ui-block-b">
+				<a  data-role="button" data-mini="true" class = "btnCommand" id = "trend" data = "trend" >9 sec Samples</a>
+			</div>
+		</div>
+		<div style="text-align: center;">
+			<div id="RealTimeChart" style="height: 360px;width: 480px;margin: 0 auto"></div>
+		</div>
+		</div>
+		<div data-role="content" id="ContentReflow" style="padding: 1px;width: 480px;margin: 0 auto"    > <!-- "float:right"  "width: 40%" "top: 0" -->
+			
+			<div id="Measurement">
+				<span style="float:left"><label for="tmf">Measurements:</label></span>
+				<div data-role="controlgroup" data-type="horizontal" style="padding: 5px" id = "tmf" data-corners="false">
+					<a href="#" class="btnMeasure" data-role="button" id="measureone" data-icon="minus">5 sec</a>
+					<a href="#" class="btnMeasure" data-role="button" id="measuretwo" data-icon="minus">10 sec</a>
+					<a href="#" class="btnMeasure" data-role="button" id="measurethree" data-icon="minus">60 sec</a>
+					<a href="#" data-role="button" id="reset" data-icon="refresh">Reset</a>
+				</div>
+			</div>
+			<div id="logs">
+				<div>
+					<span style="float:left"><label for="txtPowerLog">Power :</label></span>
+					<textarea cols="40" rows="8"  id="txtPowerLog" readonly="readonly"></textarea>
+				</div>
+				
+				<form>
+					<span style="float:left"><label for="processLog">Process Log:</label></span>
+					<textarea cols="40" rows="8"  id="processLog" readonly="readonly"></textarea>
+				</form>
+				<form>
+					<span style="float:left"><label for="errorLog">Error Log:</label></span>
+					<textarea cols="40" rows="8"   id="errorLog" readonly="readonly"></textarea>
+				</form>	
+			</div>
+		</div>
+  </div>
+
+	</div>
+	<!--Page to use as a dialog, to change which meter you are talking to-->
+	<div data-role="page" id="pageoptions"  class="ui-content" data-theme="a" style="padding:7px 7px 7px 7px">
+		<div data-theme="a" data-role="header">
+			<h1 style="color:#cccccc;">Meters</h1>
+		</div>
+		<div data-role="fieldcontain" style="padding:7px 7px 7px 7px">
+			<label for="meterurl">agent url</label>
+			<input type="text" id="meterurl" data-mini="true" />
+		</div>
+		<div data-role="fieldcontain" style="padding:7px 7px 7px 7px">
+		<label for="selectmeter" class="select">Meter:</label>
+			<select name="selectmeter" id="selectmeter" data-mini="true" data-corners = "true" >
+				<option value="Watt1">Watt1 Carlon Box, </option>
+				<option value="Watt2">Watt2 Polycase box, </option>
+			</select>
+		</div>
+		<div style="padding:7px 7px 7px 7px">
+		<hr>
+			<p><h4>Credits</h4></p>
+			<p>The Mz Lab</p>
+		</div>
+	</div>
+
+	<!--Page to use as a dialog, show a bit of infomration -->
+	<div data-role="page" id="mydialog"  data-dialog="true" class="ui-content" data-theme="a" style="padding:7px 7px 7px 7px">
+		<div data-theme="a" data-role="header">
+			<h1 style="color:#cccccc;">Information</h1>
+		</div>
+		<div style="padding:7px 7px 7px 7px" id = "dialogtext">
+		
+			<p ><h4 id = "dialogtitle">Credits</h4></p>
+			<p id = "dialogcontent">The Mz Lab</p>
+		</div>
+	</div>
+
+
+</body>
+</html>
