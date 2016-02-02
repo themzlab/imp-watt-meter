@@ -15,3 +15,5 @@ Using the electric imp agent, it is possible to redirect the data to one of many
 data repository services.
 
 http://themzlab.tumblr.com/wattmeter
+
+![imp-watt-meter-screenshot-refrigerator](https://cloud.githubusercontent.com/assets/15392670/12759372/5f4b9a68-c9a6-11e5-9635-47214c703a59.jpg)
