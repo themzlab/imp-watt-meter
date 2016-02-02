@@ -16,4 +16,11 @@ data repository services.
 
 http://themzlab.tumblr.com/wattmeter
 
+Here is a screenshot of the web page
+
 ![imp-watt-meter-screenshot-refrigerator](https://cloud.githubusercontent.com/assets/15392670/12759372/5f4b9a68-c9a6-11e5-9635-47214c703a59.jpg)
+
+
+Here is one of the build options.  The case is a PM2425 from polycase.
+![imp-watt-meter-opened-case](https://cloud.githubusercontent.com/assets/15392670/12759455/c819d618-c9a6-11e5-8db5-ead435683a78.jpg)
+
