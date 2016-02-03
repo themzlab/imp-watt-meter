@@ -20,7 +20,7 @@ There is a web page using javascript, jquery and highcharts that will allow one 
 
 **Additional documentation here**
 
-http://themzlab.tumblr.com/wattmeter
+[visit this project on tumblr](http://themzlab.tumblr.com/wattmeter)
 
 
 Here is a screenshot of the web page
