@@ -60,17 +60,17 @@ CAL_WATT3["20000c2a69999999"] <- { // imp 5.0-C
     ,_VOLTSCALE = 19210.9 //might need to (did) increase it
     ,VRMSOS = -390     //
     
-    ,AIRMSOS = -2725  //-5943     // try to calibrated with 10K load and formula on page 8
-    ,_CURRENTSCALE = 105517.2  //105602.8 //
+    ,AIRMSOS = -2725  // try to calibrated with 10K load and formula on page 8
+    ,_CURRENTSCALE = 105517.2  //
     
-    ,AWATTOS = 189 //708    //Calibrated with small load AFTER having calibrated the current and voltage
-    ,AVAOS = 189 //708      //copy of the Watt offset - if they are the same, same PF?
+    ,AWATTOS = 189    //Calibrated with small load AFTER having calibrated the current and voltage
+    ,AVAOS = 189 //copy of the Watt offset - if they are the same, same PF?
 
 
-    ,_VASCALE = 120.811 // 120.95
+    ,_VASCALE = 120.811
    
    
-    ,_WATTSFROMENERGY = 193.6 //193.53
+    ,_WATTSFROMENERGY = 193.6
     
     ,previous_time = 0
     
@@ -147,7 +147,7 @@ CAL_NOM <- { //from calibration of the device -
 
 //VARIABLE DEFINITIONS __________________________________________________ {
 
-//server.save(CAL_WATT3["20000c2a690227c3"]);//This is a temporary line to bring up new devices
+//server.save(CAL_WATT3["20000c2a99999999"]);//This is a temporary line to bring up new devices
 
 CAL <- server.load();//a virgin device will not have anything here but 
 
@@ -1358,9 +1358,9 @@ foreach (i, v in CAL.reference){
 // =========================================================={
 
                     
-const TWILIO_SID = "ACf764d8133386a220d07a8deeb7bb3211";		// Your Twilio Account SID
-const TWILIO_AUTH = "6441783a6a0a306fad7a18ad848afe9e";		// Your Twilio Auth Token
-const TWILIO_NUM = "12629120564";		// Your Twilio Phone Number
+const TWILIO_SID = "f5456f4f45fe45fe45t4fe45fte54ft4e5tf5";		// Your Twilio Account SID
+const TWILIO_AUTH = "fe5tfetfetertft45ff44fefte4tfestrt";		// Your Twilio Auth Token
+const TWILIO_NUM = "15559999";		// Your Twilio Phone Number
 
 
 
@@ -1428,7 +1428,7 @@ class Twilio {
 twilio <- Twilio(TWILIO_SID, TWILIO_AUTH, TWILIO_NUM);
 
 // sending a message
-numberToSendTo <- "12623542682"
+numberToSendTo <- "18885559999"
 //twilio.send(numberToSendTo,( "Agent Booted The Mz Lab ~" + http.agenturl()), function(resp) { server.log(resp.statuscode + " - " + resp.body); });
 
 
