@@ -1,4 +1,4 @@
-# imp-watt-meter
+### imp-watt-meter
 single-phase energy meter for AC power.  Uses electric imp
 
 The core of this design is the energy metering ic, ADE7953.  This ic does all of the measuring duties.
@@ -14,7 +14,14 @@ A PHP script recieves this message and logs to a file.
 Using the electric imp agent, it is possible to redirect the data to one of many
 data repository services.
 
+There is a web page using javascript, jquery and highcharts that will allow one to look at current data and also take a snapshot of the current and voltage waveform or else take a 5 second time plot of the power.
+
+
+
+**Additional documentation here**
+
 http://themzlab.tumblr.com/wattmeter
+
 
 Here is a screenshot of the web page
 
