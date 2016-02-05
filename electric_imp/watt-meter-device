@@ -35,16 +35,8 @@ intervaltime <- fastinterval;
 _wifi <- {
     current = -1,
     connections = [
-       { ssid = "themzlab", pw = "Bernadine2011" },
-       { ssid = "silly05", pw = "Bernadine2011" },
-        { ssid = "JHT HQ", pw = "ful6g0pewlew" },
-        { ssid = "OFFICEHIDDEN", pw = "" },
-        { ssid = "Verizon-MiFi5510L-E494", pw = "7d91703c" },
-        { ssid = "marknote3", pw = "toolbelt23" },
-        { ssid = "Verizon-Float-MiFi-2", pw = "3d0e0c0c"},
-        { ssid = "2WIRE256", pw = "1073308184"},
-        { ssid = "ruthjetpack", pw = "1073308184" },
-        { ssid = "rd02", pw = "QvnDjg8PZodeN34LZSpl" }
+       { ssid = "ssid1", pw = "password1" },
+       { ssid = "ssid2", pw = "password2" }
     ]
 };
 
