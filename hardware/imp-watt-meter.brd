@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.4.0">
+<eagle version="7.1.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -5380,7 +5380,7 @@ Please make sure your boards conform to these design rules.</description>
 <contactref element="C20" pad="1"/>
 <contactref element="PAD1" pad="1"/>
 </signal>
-<signal name="I2C_DATA_2">
+<signal name="MISO">
 <contactref element="U$5" pad="PAD14"/>
 <contactref element="R62" pad="1"/>
 <wire x1="22.4028" y1="17.526" x2="23.2918" y2="17.526" width="0.2032" layer="1"/>
@@ -5403,7 +5403,7 @@ Please make sure your boards conform to these design rules.</description>
 <contactref element="U$13" pad="P$1"/>
 <wire x1="23.9522" y1="11.1252" x2="23.9522" y2="10.4902" width="0.2032" layer="1"/>
 </signal>
-<signal name="I2C_CLOCK_1">
+<signal name="MOSI">
 <contactref element="U$5" pad="PAD22"/>
 <contactref element="R61" pad="2"/>
 <wire x1="23.876" y1="14.732" x2="24.13" y2="14.986" width="0.2032" layer="16"/>
