@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.4.0">
+<eagle version="7.1.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -26915,7 +26915,7 @@ is tested after reflow soldering.</text>
 <label x="218.44" y="63.5" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="I2C_DATA_2" class="0">
+<net name="MISO" class="0">
 <segment>
 <label x="218.44" y="137.16" size="1.778" layer="95" rot="R180" xref="yes"/>
 <pinref part="U$5" gate="G$1" pin="PIN9"/>
@@ -26934,7 +26934,7 @@ is tested after reflow soldering.</text>
 <label x="142.24" y="119.38" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="I2C_CLOCK_1" class="0">
+<net name="MOSI" class="0">
 <segment>
 <label x="223.52" y="142.24" size="1.778" layer="95" rot="R180" xref="yes"/>
 <pinref part="U$5" gate="G$1" pin="PIN8"/>
