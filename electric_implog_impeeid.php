@@ -1,6 +1,7 @@
 <?php
 /* script to recieve the JSON data from the agent
    agent sends...
+   
  	{ "I": 2.72236, "unixtime": 1385870780, "GMT": "2013-12-01T04:06:21", "V": 122.664, "PF": 0.917173, "W": 306.4, "Ipeak": 2.37886 } 
    php input receives
     { "I": 2.72236, "unixtime": 1385870780, "GMT": "2013-12-01T04:06:21", "V": 122.664, "PF": 0.917173, "W": 306.4, "Ipeak": 2.37886 } 
