@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.1.0">
+<eagle version="7.4.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -26275,6 +26275,7 @@ power-up troubleshooting.  They are all
 required to be shorted for normal
 operation.  Connect them as each sub-circuit
 is tested after reflow soldering.</text>
+<text x="297.18" y="104.14" size="3.048" layer="91" rot="R180">imp002</text>
 </plain>
 <instances>
 <instance part="C5" gate="G$1" x="157.48" y="88.9"/>
