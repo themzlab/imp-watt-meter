@@ -1,4 +1,4 @@
-resetallkwh <- false;
+﻿resetallkwh <- false;
 
 // Personal, domain, keys, hosted files ----------------------------------{
 
@@ -1480,6 +1480,6 @@ function agentToagent() {
 }//done
 
 
- //twilio.send("12623542682", ("I forgot my phone..so did Maya"), function(resp) { server.log(resp.statuscode + " - " + resp.body); });
+ //twilio.send("12625550000", ("I forgot my phone..so did Maya"), function(resp) { server.log(resp.statuscode + " - " + resp.body); });
  
  
